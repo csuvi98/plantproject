@@ -1,0 +1,49 @@
+# --- Root/General ---
+.DS_Store
+*.log
+.env
+secret.h
+
+# --- Backend (Spring Boot) ---
+target/
+*.class
+*.jar
+*.war
+.mtj.tmp/
+.classpath
+.project
+.settings/
+bin/
+.gradle/
+build/
+backend/**/application.properties
+
+# --- Frontend (React) ---
+node_modules/
+dist/
+build/
+.cache/
+.eslintcache
+.stylelintcache
+
+# --- Hardware (ESP32/Arduino) ---
+.pio/
+.vscode/
+*.hex
+*.bin
+*.elf
+*.o
+*.a
+# Ignore your secrets file if you haven't already
+hw/**/secret.h
+
+# --- IDEs ---
+.idea/
+*.swp
+*.swo
+.vscode/
+frontend/plant-monitor-ui/public/vite.svg
+hw/plant-monitor-hw/include/README
+hw/plant-monitor-hw/lib/README
+frontend/plant-monitor-ui/src/components/DataTester.tsx
+frontend/plant-monitor-ui/src/assets/react.svg
