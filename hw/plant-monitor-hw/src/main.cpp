@@ -5,129 +5,73 @@
 #include <ArduinoJson.h>
 #include "secret.h"
 
-// Task Handlers (optional, but good practice)
-TaskHandle_t networkConnectionTask;
-TaskHandle_t sensorReadingTask;
-QueueHandle_t readingQueue;
+#define uS_TO_S_FACTOR 1000000 // uS to S conversion
+#define TIME_TO_SLEEP 10       // time to sleep in seconds
+
+const int sensorPin = 34; // GPIO pin for sensor
 
 WiFiClientSecure wifiClient;
-int status = WL_IDLE_STATUS;
-
-PubSubClient pubSubClient(wifiClient);
-
-// --- Task 1: Runs on Core 0 ---
-void networkConnection(void *pvParameters)
-{
-  for (;;) // Keep the task alive forever
-  {
-    // 1. ENSURE WIFI IS CONNECTED
-    if (WiFi.status() != WL_CONNECTED)
-    {
-      WiFi.begin(ssid, pass);
-      while (WiFi.status() != WL_CONNECTED)
-      {
-        vTaskDelay(pdMS_TO_TICKS(500));
-        Serial.print(".");
-      }
-      Serial.println("\nConnected to WiFi");
-    }
-
-    // 2. ENSURE MQTT IS CONNECTED
-    if (!pubSubClient.connected())
-    {
-      Serial.println("Attempting MQTT connection...");
-      // Try to connect
-      // Update the connect line to include credentials
-      if (pubSubClient.connect("ESP32_Plant_Project", mqtt_user, mqtt_pass))
-      {
-        Serial.println("Connected to HiveMQ Cloud!");
-      }
-      else
-      {
-        Serial.print("MQTT Failed, state code: ");
-        Serial.println(pubSubClient.state());
-        vTaskDelay(pdMS_TO_TICKS(5000)); // Wait 5s before retrying
-        continue;
-      }
-    }
-
-    // 3. THE HEARTBEAT (Crucial)
-    pubSubClient.loop();
-
-    // 4. PERIODIC PUBLISH
-    // Using a simple timer so we don't spam the broker every millisecond
-
-    int receivedVal;
-    if (xQueueReceive(readingQueue, &receivedVal, pdMS_TO_TICKS(100)) == pdPASS)
-    {
-      JsonDocument plantDataToSend;
-      plantDataToSend["reading"] = receivedVal;
-
-      char payload[32];
-
-      serializeJson(plantDataToSend, payload);
-
-      pubSubClient.publish("plantData", payload);
-    }
-
-    vTaskDelay(pdMS_TO_TICKS(10)); // Tiny yield to keep Watchdog happy
-  }
-}
-
-// --- Task 2: Runs on Core 1 ---
-void readSensorData(void *pvParameters)
-{
-  Serial.print("Sensor reading task running on core ");
-  Serial.println(xPortGetCoreID());
-  for (;;)
-  {
-    int dummyData = random(0, 100);
-    xQueueSend(readingQueue, &dummyData, 0);
-    Serial.printf("Generated Dummy Data: %.2f\n", dummyData);
-    vTaskDelay(pdMS_TO_TICKS(5000));
-  }
-}
+PubSubClient pubSubClient(wifiClient); // MQTT client
 
 void setup()
 {
-  Serial.begin(115200);
-  wifiClient.setInsecure();
-  pubSubClient.setServer(mqtt_server, 8883);
+    Serial.begin(115200);
+    wifiClient.setInsecure();
+    pubSubClient.setServer(mqtt_server, 8883);
+    esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
 
-  // Create a queue that can hold 20 integers
-  readingQueue = xQueueCreate(20, sizeof(int));
+    // Collecting soil moisture data
+    Serial.println("Reading sensor data...");
+    analogReadResolution(12);
+    analogSetPinAttenuation(sensorPin, ADC_11db);
+    int sensorData = analogRead(sensorPin);
+    Serial.print("Sensor data: ");
+    Serial.println(sensorData);
 
-  if (readingQueue == NULL)
-  {
-    Serial.println("Queue creation failed!");
-  }
+    // Connect to WiFi
+    if (WiFi.status() != WL_CONNECTED)
+    {
+        WiFi.begin(ssid, pass);
+        while (WiFi.status() != WL_CONNECTED)
+        {
+            delay(500);
+            Serial.print(".");
+        }
+        Serial.println("\nConnected to WiFi");
+    }
 
-  // Create Task 1: "Task1", Stack size 10000, Priority 1, pinned to Core 0
-  xTaskCreatePinnedToCore(
-      networkConnection,       /* Task function. */
-      "NetworkConnectionTask", /* name of task. */
-      10000,                   /* Stack size of task */
-      NULL,                    /* parameter of the task */
-      1,                       /* priority of the task */
-      &networkConnectionTask,  /* Task handle to keep track of created task */
-      0);                      /* pin task to core 0 */
-  delay(500);
+    // Connect to MQTT broker
+    if (!pubSubClient.connected())
+    {
+        Serial.println("Attempting MQTT connection...");
 
-  // Create Task 2: pinned to Core 1
-  xTaskCreatePinnedToCore(
-      readSensorData,
-      "SensorReadingTask",
-      10000,
-      NULL,
-      1,
-      &sensorReadingTask,
-      1); /* pin task to core 1 */
-  delay(500);
+        if (pubSubClient.connect("ESP32_Plant_Project", mqtt_user, mqtt_pass))
+        {
+            Serial.println("Connected to HiveMQ Cloud!");
+        }
+        else
+        {
+            Serial.print("MQTT Failed, state code: ");
+            Serial.println(pubSubClient.state());
+            delay(500);
+        }
+    }
+
+    // Serialize data into JSON
+    JsonDocument plantDataToSend;
+    plantDataToSend["reading"] = sensorData;
+    char payload[32];
+    serializeJson(plantDataToSend, payload);
+
+    // Publish data to MQTT
+    pubSubClient.publish("plantData", payload);
+    pubSubClient.loop();
+    delay(200);
+    Serial.println("Data published! Going back to sleep.");
+    esp_deep_sleep_start();
 }
 
 void loop()
 {
-  // In FreeRTOS on ESP32, the loop() is actually its own low-priority task.
-  // We can leave it empty or use it for system heartbeats.
-  vTaskDelete(NULL); // Or just delete this task if not needed
+    // No need for loop due to deep sleep starting from setup()
 }
