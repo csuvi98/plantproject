@@ -21,6 +21,10 @@ import com.plant.service.PlantDataService;
 
 import tools.jackson.databind.ObjectMapper;
 
+/*  This class is responsible for catching MQTT messages
+    sent from the sensor to the HiveMQ broker.
+    It also converts the readings to PlantData and saves
+    them in the DB with PlantDataService. */
 @Configuration
 public class MqttConfig {
 
@@ -40,6 +44,7 @@ public class MqttConfig {
         this.plantDataService = plantDataService;
     }
 
+    // Set up MQTT client, with username and password configured on HiveMQ
     @Bean
     public MqttPahoClientFactory mqttClientFactory() {
         DefaultMqttPahoClientFactory factory = new DefaultMqttPahoClientFactory();
@@ -57,6 +62,8 @@ public class MqttConfig {
         return new DirectChannel();
     }
 
+    // Inbound data is monitored on the plantData topic, sets up MQTT client
+    // specified above
     @Bean
     MessageProducer inbound() {
         MqttPahoMessageDrivenChannelAdapter adapter = new MqttPahoMessageDrivenChannelAdapter(
@@ -68,6 +75,11 @@ public class MqttConfig {
         return adapter;
     }
 
+    /*
+     * Upon receiving data, we log the details, convert it to
+     * PlantData, and save it in the DB with PlantDataService
+     */
+
     @Bean
     @ServiceActivator(inputChannel = "mqttInputChannel")
     public MessageHandler mqttMessageHandler() {
@@ -76,6 +88,7 @@ public class MqttConfig {
                 String payload = message.getPayload().toString();
                 System.out.println("New MQTT Message: " + payload);
 
+                // ObjectMapper maps the "reading" JSON data to "reading" PlantData variable
                 ObjectMapper mapper = new ObjectMapper();
                 PlantData newPlantData = mapper.readValue(payload, PlantData.class);
 

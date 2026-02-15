@@ -14,6 +14,8 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("${app.localhost.url}")
     private String localhostUrl;
 
+    // Allow localhost ports for frontend to send requets to the backend
+    // Currently it's localhost, will be changed to something else once hosted
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")

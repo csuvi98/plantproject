@@ -2,6 +2,10 @@ import { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Activity } from 'lucide-react';
 
+
+// DISCLIAMER: The project is focusing on backend practicing, so this is largely AI generated code.
+
+
 // --- CONFIGURATION ---
 const USE_DUMMY_DATA = false; // Set to 'true' to test the UI without the backend
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;

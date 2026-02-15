@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.plant.dao.PlantData;
 
-public interface PlantDataRepository extends JpaRepository<PlantData, Long>{
+public interface PlantDataRepository extends JpaRepository<PlantData, Long> {
+    // Find entries from after a date
     List<PlantData> findByDateAfter(LocalDateTime date);
 }

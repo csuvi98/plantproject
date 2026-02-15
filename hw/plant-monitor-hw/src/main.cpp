@@ -10,20 +10,32 @@
 
 const int sensorPin = 34; // GPIO pin for sensor
 
-WiFiClientSecure wifiClient;
+WiFiClientSecure wifiClient;           // WiFi client
 PubSubClient pubSubClient(wifiClient); // MQTT client
 
+/*
+    The ESP32 wakes up from deep sleep, measures the soil moisture sensor readings,
+    connects to the WiFi, then the HiveMQ broker, and then publishes the reading
+    to the plantData topic, that the backend will consume. Then, it goes back to
+    deep sleep to conserve energy.
+*/
 void setup()
 {
+    // For debugging purposes
     Serial.begin(115200);
+
+    // Configure WiFi and MQTT clients + deep sleep
     wifiClient.setInsecure();
     pubSubClient.setServer(mqtt_server, 8883);
     esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
 
     // Collecting soil moisture data
     Serial.println("Reading sensor data...");
+
+    // Set resolution between 0 and 4096, default attenuation
     analogReadResolution(12);
     analogSetPinAttenuation(sensorPin, ADC_11db);
+
     int sensorData = analogRead(sensorPin);
     Serial.print("Sensor data: ");
     Serial.println(sensorData);

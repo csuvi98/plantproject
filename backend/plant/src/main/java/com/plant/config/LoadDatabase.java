@@ -13,6 +13,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.time.LocalDateTime;
 
+// Used for dummy data
 @Configuration
 class LoadDatabase {
     /*

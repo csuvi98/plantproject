@@ -13,8 +13,11 @@ public class PlantData {
     @GeneratedValue
     private Long id;
 
+    // Date of measurement
     private LocalDateTime date;
+    // Raw sensor reading value
     private int reading;
+    // Sensor value in percentage
     private int percentage;
 
     public PlantData() {
@@ -52,10 +55,11 @@ public class PlantData {
         this.percentage = percentage;
     }
 
+    // Before writing the entry to the DB, calculate the percentage value
+    // This way it's always calculated
     @jakarta.persistence.PrePersist
     @jakarta.persistence.PreUpdate
     public void calculatePercentage() {
-        // Math logic moved here ensures it's ALWAYS calculated
         this.percentage = (int) (((double) this.reading / 4096.0) * 100.0);
     }
 
