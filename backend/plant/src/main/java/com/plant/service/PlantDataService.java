@@ -12,6 +12,8 @@ public class PlantDataService {
 
     private final PlantDataRepository repository;
 
+    final int MAX_READING_VALUE = 4096;
+
     public PlantDataService(PlantDataRepository repository) {
         this.repository = repository;
     }
@@ -51,5 +53,14 @@ public class PlantDataService {
 
     public List<PlantData> getLastThirtyDays() {
         return repository.findByDateAfter(LocalDateTime.now().minusDays(30));
+    }
+
+    public int readingToPercentage(int reading) {
+        double readingInDouble = (double) reading;
+        double maxValueInDouble = (double) MAX_READING_VALUE;
+        double percentage = (readingInDouble / maxValueInDouble) * 100.0;
+        int result = (int) percentage;
+
+        return result;
     }
 }

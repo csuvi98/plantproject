@@ -83,6 +83,7 @@ public class MqttConfig {
                 newPlantData = plantDataService.save(newPlantData);
 
                 System.out.println("Successfully saved reading: " + newPlantData.getReading() + " "
+                        + newPlantData.getPercentage() + " "
                         + newPlantData.getDate() + " ID " + newPlantData.getId());
             } catch (Exception e) {
                 System.err.println("Failed to process MQTT message: " + e.getMessage());
