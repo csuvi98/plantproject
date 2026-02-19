@@ -62,6 +62,11 @@ public class MqttConfig {
         return new DirectChannel();
     }
 
+    @Bean
+    ObjectMapper mqttObjectMapper() {
+        return new ObjectMapper();
+    }
+
     // Inbound data is monitored on the plantData topic, sets up MQTT client
     // specified above
     @Bean
@@ -82,15 +87,14 @@ public class MqttConfig {
 
     @Bean
     @ServiceActivator(inputChannel = "mqttInputChannel")
-    public MessageHandler mqttMessageHandler() {
+    public MessageHandler mqttMessageHandler(ObjectMapper mqttObjectMapper) {
         return message -> {
             try {
                 String payload = message.getPayload().toString();
                 System.out.println("New MQTT Message: " + payload);
 
                 // ObjectMapper maps the "reading" JSON data to "reading" PlantData variable
-                ObjectMapper mapper = new ObjectMapper();
-                PlantData newPlantData = mapper.readValue(payload, PlantData.class);
+                PlantData newPlantData = mqttObjectMapper.readValue(payload, PlantData.class);
 
                 newPlantData.setDate(LocalDateTime.now());
                 newPlantData = plantDataService.save(newPlantData);

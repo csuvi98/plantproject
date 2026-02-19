@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Activity } from 'lucide-react';
 
@@ -39,7 +39,7 @@ function App() {
    * FetchData: The core function that talks to Spring Boot.
    * 'async/await' is a modern way to handle tasks that take time (like networking).
    */
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (USE_DUMMY_DATA) {
       setReadings(generateMockData());
       setLoading(false);
@@ -48,29 +48,12 @@ function App() {
 
     try {
       setLoading(true);
-
-      let url; // Use a variable for the URL to make it cleaner
-      switch (view) {
-        case '30D': url = API_ENDPOINTS.MONTH; break;
-        case '7D': url = API_ENDPOINTS.WEEK; break;
-        default: url = API_ENDPOINTS.ALL; break;
-      }
-
-      let response
-      switch (view) {
-        case '30D':
-          response = await fetch(API_ENDPOINTS.MONTH)
-          break
-        case '7D':
-          response = await fetch(API_ENDPOINTS.WEEK)
-          break
-        default:
-          response = await fetch(API_ENDPOINTS.ALL)
-          break
-      }
-
-      console.log(`Fetching from: ${url}`);
-
+      const urlMap = {
+        '30D': API_ENDPOINTS.MONTH,
+        '7D': API_ENDPOINTS.WEEK,
+        'ALL': API_ENDPOINTS.ALL
+      };
+      const response = await fetch(urlMap[view]);
       if (!response.ok) throw new Error("Backend unreachable");
       const data = await response.json();
       setReadings(data);
@@ -79,7 +62,7 @@ function App() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [view]);
 
   /**
      * We add [view] to the dependency array.
@@ -88,7 +71,7 @@ function App() {
      */
   useEffect(() => {
     fetchData();
-  }, [view]);
+  }, [fetchData]);
 
   /**
      * Since the Backend is now filtering the data for us, 

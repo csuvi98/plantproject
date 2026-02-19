@@ -47,3 +47,5 @@ hw/plant-monitor-hw/include/README
 hw/plant-monitor-hw/lib/README
 frontend/plant-monitor-ui/src/components/DataTester.tsx
 frontend/plant-monitor-ui/src/assets/react.svg
+backend/plant/backend.zip
+frontend/plant-monitor-ui/frontend.zip
