@@ -1,6 +1,8 @@
 package com.plant.config;
 
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,6 +17,7 @@ import org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannel
 import org.springframework.integration.mqtt.support.DefaultPahoMessageConverter;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
+import javax.net.ssl.SSLContext;
 
 import com.plant.dao.PlantData;
 import com.plant.service.PlantDataService;
@@ -53,6 +56,18 @@ public class MqttConfig {
         options.setUserName(mqttUser);
         options.setPassword(mqttPw.toCharArray());
         options.setAutomaticReconnect(true);
+        options.setKeepAliveInterval(60);
+        options.setConnectionTimeout(30);
+        options.setCleanSession(true);
+        // Add this block:
+        try {
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, null, null);
+            options.setSocketFactory(sslContext.getSocketFactory());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create SSL context", e);
+        }
+
         factory.setConnectionOptions(options);
         return factory;
     }
@@ -72,7 +87,7 @@ public class MqttConfig {
     @Bean
     MessageProducer inbound() {
         MqttPahoMessageDrivenChannelAdapter adapter = new MqttPahoMessageDrivenChannelAdapter(
-                "plantMonitorClient", mqttClientFactory(), "plantData");
+                "plantMonitorClient-" + UUID.randomUUID(), mqttClientFactory(), "plantData");
         adapter.setCompletionTimeout(5000);
         adapter.setConverter(new DefaultPahoMessageConverter());
         adapter.setQos(1);
