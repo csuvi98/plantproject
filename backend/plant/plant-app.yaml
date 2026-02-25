@@ -25,8 +25,16 @@ spec:
             - name: DB_USERNAME
               value: postgres
             - name: DB_PASSWORD
-              value: db-password
----          
+              valueFrom:
+                secretKeyRef:
+                  name: plant-secrets
+                  key: DB_PASSWORD
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: plant-secrets
+                  key: ADMIN_PASSWORD
+---
 # Service
 apiVersion: v1
 kind: Service
