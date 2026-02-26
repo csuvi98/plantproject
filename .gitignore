@@ -49,3 +49,5 @@ frontend/plant-monitor-ui/src/components/DataTester.tsx
 frontend/plant-monitor-ui/src/assets/react.svg
 backend/plant/backend.zip
 frontend/plant-monitor-ui/frontend.zip
+backend/plant/src/main/resources/application-dev.properties
+plantproject-setup.md

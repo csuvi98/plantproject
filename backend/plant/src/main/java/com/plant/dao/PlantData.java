@@ -5,9 +5,19 @@ import java.time.LocalDateTime;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 
 @Entity
+@Table(indexes = @Index(columnList = "date"))
 public class PlantData {
+
+    /*
+     * The sensor reads values from 0 to 4096,
+     * with 4096 being the moisture value of dry air,
+     * and 0 being 100% wet.
+     */
+    final int MAX_READING_VALUE = 4096;
 
     @Id
     @GeneratedValue
@@ -60,7 +70,7 @@ public class PlantData {
     @jakarta.persistence.PrePersist
     @jakarta.persistence.PreUpdate
     public void calculatePercentage() {
-        this.percentage = (int) (((double) this.reading / 4096.0) * 100.0);
+        this.percentage = (int) (((double) (MAX_READING_VALUE - this.reading) / MAX_READING_VALUE) * 100.0);
     }
 
 }

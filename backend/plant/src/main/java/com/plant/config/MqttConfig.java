@@ -22,6 +22,7 @@ import javax.net.ssl.SSLContext;
 import com.plant.dao.PlantData;
 import com.plant.service.PlantDataService;
 
+import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.ObjectMapper;
 
 /*  This class is responsible for catching MQTT messages
@@ -29,6 +30,7 @@ import tools.jackson.databind.ObjectMapper;
     It also converts the readings to PlantData and saves
     them in the DB with PlantDataService. */
 @Configuration
+@Slf4j
 public class MqttConfig {
 
     @Value("${app.mqtt.url}")
@@ -106,7 +108,7 @@ public class MqttConfig {
         return message -> {
             try {
                 String payload = message.getPayload().toString();
-                System.out.println("New MQTT Message: " + payload);
+                log.info("New MQTT Message: " + payload);
 
                 // ObjectMapper maps the "reading" JSON data to "reading" PlantData variable
                 PlantData newPlantData = mqttObjectMapper.readValue(payload, PlantData.class);
@@ -114,11 +116,11 @@ public class MqttConfig {
                 newPlantData.setDate(LocalDateTime.now());
                 newPlantData = plantDataService.save(newPlantData);
 
-                System.out.println("Successfully saved reading: " + newPlantData.getReading() + " "
+                log.info("Successfully saved reading: " + newPlantData.getReading() + " "
                         + newPlantData.getPercentage() + " "
                         + newPlantData.getDate() + " ID " + newPlantData.getId());
             } catch (Exception e) {
-                System.err.println("Failed to process MQTT message: " + e.getMessage());
+                log.info("Failed to process MQTT message: " + e.getMessage());
             }
         };
     }

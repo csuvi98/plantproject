@@ -10,4 +10,7 @@ import com.plant.dao.PlantData;
 public interface PlantDataRepository extends JpaRepository<PlantData, Long> {
     // Find entries from after a date
     List<PlantData> findByDateAfter(LocalDateTime date);
+
+    // Delete all entries older than a given date
+    void deleteByDateBefore(LocalDateTime date);
 }
